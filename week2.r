@@ -231,3 +231,37 @@ capAveTruth <- (capAveTruth - mean(capAveTruth))/sd(capAveTruth)
 quantile(capAve - capAveTruth)
 quantile((capAve - capAveTruth)[selectNA])
 quantile((capAve - capAveTruth)[! selectNA])
+
+
+#covariate creation
+library(kernlab);data(spam)
+# transforming tidy covariates ex
+spam$capitalAveSq<-spam$capitalAve^2
+
+library(ISLR); library(caret); data(Wage);
+
+inTrain <- createDataPartition(y=Wage$wage,
+                               p=0.7, list=FALSE)
+training <- Wage[inTrain,]; testing <- Wage[-inTrain,]
+
+table(training$jobclass)
+
+dummies <- dummyVars(wage ~ jobclass, data=training)
+head(predict(dummies, newdata=training))
+
+# zero covariate (low variablility - constants - not useful for prediction)
+nsv <- nearZeroVar(training, saveMetrics = TRUE)
+nsv
+
+# spline basis
+library(splines)
+bsBasis <- bs(training$age, df=3)
+bsBasis
+
+lm1 <- lm(wage ~ bsBasis, data=training)
+plot(training$age, training$wage, pch=19, cex=0.5)
+points(training$age, predict(lm1, newdata=training), col="red", pch=19, cex=0.5)
+
+
+#predict  (remember to use training set to set)
+predict(bsBasis, age=testing$age)
