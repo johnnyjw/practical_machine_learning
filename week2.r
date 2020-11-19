@@ -265,3 +265,57 @@ points(training$age, predict(lm1, newdata=training), col="red", pch=19, cex=0.5)
 
 #predict  (remember to use training set to set)
 predict(bsBasis, age=testing$age)
+
+# preprocessing with PCA
+library(kernlab);data(spam); library(caret)
+
+inTrain <- createDataPartition(y = spam$type,
+                               p = 0.75,
+                               list = FALSE)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+
+M <- abs(cor(training[,-58]))
+diag(M) <- 0
+which(M > 0.8, arr.ind = T)
+
+names(spam[c(32, 34)])
+plot(spam[,34], spam[,32])
+
+# rotating the plot
+X <- 0.71*training$num415 + 0.71*training$num857
+Y <- 0.71*training$num415 - 0.71*training$num857
+plot(X, Y)
+
+#principal components
+smallSpam <- spam[, c(34, 32)]
+prComp <- prcomp(smallSpam)
+plot(prComp$x[,1], prComp$x[,2])
+
+prComp$rotation
+
+#plotting the principal components
+#setting spam colour
+# black if not spam, red if spam
+typeColor <- ((spam$type=="spam")*1 + 1)
+prComp <- prcomp(log10(spam[,-58] + 1))
+plot(prComp$x[,1], prComp$x[,2], col=typeColor, xlab="PC1", ylab="PC2")
+
+#doing PCA with caret
+preProc <- preProcess(log10(spam[,-58] + 1), method="pca", pcaComp = 2)
+spamPC <- predict(preProc, log10(spam[,-58] + 1))
+plot(spamPC[,1], spamPC[,2], col=typeColor)
+
+#in a ML workflow
+preProc <- preProcess(log10(training[,-58] + 1), method="pca", pcaComp = 2)
+trainPC <- predict(preProc, log10(training[,-58] + 1))
+trainPC$tt <- training$type
+modelFit <- train(tt ~ ., method = "glm", data = trainPC)
+# testing
+testPC <- predict(preProc, log10(testing[,-58] + 1))
+confusionMatrix(testing$type, predict(modelfit,testPC))
+
+#put preprocess into training function
+modelFit <- train(type ~ ., method="glm",
+                    preProcess = "pca", data = training)
+confusionMatrix(testing$type, predict(modelFit,testing))
