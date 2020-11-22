@@ -371,3 +371,55 @@ matlines(testFaith$waiting[ord], pred1[ord,], type='l', ,col=c(1,2,2),lty=c(1,1,
 #using carat
 modFit <- train(eruptions~waiting, data=trainFaith, method="lm")
 summary(modFit$finalModel)
+
+# Prediction with regression using multiple covariates
+library(ISLR); library(caret); data(Wage); library(ggplot2)
+Wage <- subset(Wage, select=-c(logwage))
+summary(Wage)
+inTrain <- createDataPartition(y=Wage$wage,
+                               p=0.7, list=FALSE)
+training <- Wage[inTrain,]; testing <- Wage[-inTrain,]
+
+dim(training); dim(testing)
+
+featurePlot(x = training[, c("age", "education", "jobclass")],
+            y = training$wage,
+            plot = "pairs")
+
+training %>%
+  ggplot(aes(age, wage, colour=jobclass)) +
+  geom_point()
+
+training %>%
+  ggplot(aes(age, wage, colour=education)) +
+  geom_point()
+
+#fit a model
+modFit <- train(wage~age + jobclass + education, 
+                method = 'lm', data=training)
+finMod <- modFit$finalModel
+print(modFit)
+
+plot(finMod, 1, pch=19, cex=0.5, col="#00000010")
+
+#plot model and colour by variables not used in the model
+training %>% 
+  ggplot(aes(finMod$fitted, finMod$residuals, colour=race)) +
+  geom_point()
+
+#plot by index
+plot(finMod$residuals, pch=19)
+
+# pred vs actual
+pred <- predict(modFit, testing)
+
+testing %>%
+  ggplot(aes(wage, pred, color=year)) +
+  geom_point()
+
+modFitAll <- train(wage~., 
+                method = 'lm', data=training)
+pred <- predict(modFitAll, testing)
+testing %>%
+  ggplot(aes(wage, pred)) +
+  geom_point()
