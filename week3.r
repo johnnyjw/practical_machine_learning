@@ -1,5 +1,6 @@
 # Week 3: Trees
 data(iris); library(ggplot2)
+library(dplyr)
 names(iris)
 table(iris$Species)
 inTrain <- createDataPartition(iris$Species,
@@ -59,3 +60,31 @@ points(ozone$ozone,predict(treebag,predictors), pch=19, col="blue")
 ctreeBag$fit
 ctreeBag$pred
 ctreeBag$aggregate
+
+# Random Forest
+data(iris); library(ggplot2); library(caret)
+library(randomForest)
+inTrain <- createDataPartition(iris$Species,
+                               p=0.7, list=FALSE)
+testing <- iris[inTrain,]
+training <- iris[-inTrain,]
+dim(training); dim(testing)
+
+modFit <- train(Species ~ ., data=training, method="rf", prox=TRUE)
+modFit
+
+getTree(modFit$finalModel, k=2)
+
+# class centers
+irisP <- classCenter(training[,c(3,4)], training$Species, modFit$finalModel$prox)
+irisP <- as.data.frame(irisP); irisP$Species <- rownames(irisP)
+training %>%
+  ggplot(aes(Petal.Width, Petal.Length, col=Species)) +
+  geom_point() +
+  geom_point(size=5, shape=4, data=irisP)
+
+pred <- predict(modFit, testing); testing$predRight <- pred==testing$Species  
+table(pred, testing$Species)
+
+#map correct and failed predictions
+qplot(Petal.Width, Petal.Length, colour=predRight, data=testing, main="New data predictions")
