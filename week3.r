@@ -88,3 +88,19 @@ table(pred, testing$Species)
 
 #map correct and failed predictions
 qplot(Petal.Width, Petal.Length, colour=predRight, data=testing, main="New data predictions")
+
+# boosting
+library(ISLR); library(caret); data(Wage); library(ggplot2)
+Wage <- subset(Wage, select=-c(logwage))
+summary(Wage)
+inTrain <- createDataPartition(y=Wage$wage,
+                               p=0.7, list=FALSE)
+training <- Wage[inTrain,]; testing <- Wage[-inTrain,]
+
+dim(training); dim(testing)
+
+modFit <- train(wage ~ ., method="gbm", data=training, verbose=FALSE)
+print(modFit)
+
+# plot predictions
+qplot(predict(modFit, testing), wage, data=testing)
