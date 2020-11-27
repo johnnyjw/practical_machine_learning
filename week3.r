@@ -104,3 +104,19 @@ print(modFit)
 
 # plot predictions
 qplot(predict(modFit, testing), wage, data=testing)
+
+# Model Based Prediction
+data(iris); library(ggplot2); library(caret)
+names(iris)
+table(iris$Species)
+
+inTrain <- createDataPartition(iris$Species,
+                               p=0.7, list=FALSE)
+testing <- iris[inTrain,]
+training <- iris[-inTrain,]
+dim(training); dim(testing)
+
+modlda = train(Species ~ ., data=training, method="lda")
+modnb = train(Species ~ ., data=training, method="nb")
+plda = predict(modlda, testing); pnb=predict(modnb, testing)
+table(plda, pnb)
