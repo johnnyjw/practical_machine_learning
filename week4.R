@@ -84,3 +84,27 @@ fcast <- forecast(ets1)
 plot(fcast); lines(ts1Test, col="red")
 
 accuracy(fcast, ts1Test)
+
+# unsupervised learning
+data(iris); library(ggplot2)
+library(dplyr)
+names(iris)
+table(iris$Species)
+inTrain <- createDataPartition(iris$Species,
+                               p=0.7, list=FALSE)
+testing <- iris[inTrain,]
+training <- iris[-inTrain,]
+dim(training); dim(testing)
+
+KMeans1 <- kmeans(subset(training, select=-c(Species)), centers=3)
+training$clusters <- as.factor(KMeans1$cluster)
+qplot(Petal.Length, Petal.Width, colour=clusters, data=training)
+
+table(KMeans1$cluster, training$Species)
+
+#build predictor
+modFit <- train(clusters ~ ., data=subset(training, select=-c(Species)),
+                   method="rpart")
+table(predict(modFit, training), training$Species)
+
+table(predict(modFit, testing), testing$Species)
